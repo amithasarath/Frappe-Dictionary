@@ -1,0 +1,55 @@
+frappe.ui.form.on('Sales Order', 'onload', function(frm){
+    frappe.call({
+         method: 'frappe.client.get_values'
+         args: {
+             'doctype': 'NFe Parameters', // DocType that is the source of the options
+             'fields': ['key', 'value'], // Fields that will provide the options (one for value, another for label, or use a single one for both)
+             'filters': [['NFe Parameters', 'group', '=', 'IPI CST']] // filter conditions while fetching a list of values
+         },
+         callback: function(res){  // receive the response from the server
+             var options = [];
+             (res.message || []).forEach(function(row){   // start a loop over all options in the response, or in a empty list; 
+               options.push({'value': row.key, 'label': row.value}) // makes a option entry 'value' and 'label'
+             });
+             frm.fields_dict.ipi_cst.options = options; // define de options for the field in this case (ipi_cst)
+         }
+    });
+});
+
+#program.js
+frappe.ui.form.on('Program', 'onload', function(frm){
+    var optns = '';
+    frappe.call({
+         method: 'erpnext.schools.doctype.program.program.get_name_id_of_student',
+         args: {
+             'nameofdoctype': 'Department', 
+         },
+         callback: function(res){ 
+             //res is result from py file
+             var options =[];
+              (res.message || []).forEach(function(row){
+                  options.push({label:row.name,value:row.department});
+                  // note: if aboce not working try uncomment below line and comment above line
+                  // optns += '<option value = "'+row.department+'">'+row.name+'</option>';
+                  // $.each(row,function(key,name){
+                  //         options.push({label:key,value:name});
+                  //         console.log(key);
+                  // });
+              });
+              // note: uncomment this if note working
+              // $('.input-with-feedback').append(optns);
+              frappe.meta.get_docfield('Program', 'program_abbreviation').options =  options;
+              frm.fields_dict.program_abbreviation.options = options;
+              
+          // define de options for the field in this case (ipi_cst)
+         }
+    });
+});
+
+#program.py
+
+@frappe.whitelist()
+
+def get_name_id_of_student(nameofdoctype):
+    result = frappe.get_all("Program",fields=['department','name'])
+    return result
